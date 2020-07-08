@@ -4,6 +4,6 @@
 
 ### SETUP BACKEND
 - add import and route on server.py
-- version is based on the github origin
+- version is based on the github origin [cepulmano] (https://github.com/cepulmano/api-fassster.git)
 
 
