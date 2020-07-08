@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>FASSSTER</title>
+	<script src="plotly-latest.min.js"></script>
+	<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+</head>
+<body>
+
+	<input type="text" id="region" placeholder="REGION PSGC">
+	<br>
+	<input type="text" id="province" placeholder="PROVINCE PSGC">
+	<br>
+	<input type="text" id="city" placeholder="CITY PSGC">
+	<br>
+	<input type="text" id="barangay" placeholder="BARANGAY PSGC">
+	<br>
+	<input type="submit" value="DISPLAY" onclick="displayDeaths()">
+
+	<div id="result">
+		
+	</div>
+
+	<script>
+		displayDeaths();
+
+		function displayDeaths() {
+			// PARAMTERS
+			let r = $('#region').val();
+			let p = $('#province').val();
+			let c = $('#city').val();
+			let b = $('#barangay').val();
+
+			// API URL
+			let URL = 'http://localhost:7777/deaths?r=' + r + '&p=' + p + '&c=' + c + '&b=' + b;
+
+			// console.log('running');
+
+			$.getJSON(URL, function(result) {
+
+				// API SERVER IS UP
+				if(result['status'] == 1) {
+					
+					let data = result['result'];
+
+					let trace_daily = {
+						name: 'Daily Deaths',
+						x: [],
+						y: [],
+						type: "bar"
+					};
+
+					let trace_7dma = {
+						name: '7DMA',
+						x: [],
+						y: [],
+						type: "scatter"
+					};
+
+					let layout_deaths = {
+						title: 'COVID-19 Deaths over Time',
+						font:{
+							family: 'Raleway, sans-serif'
+						},
+						showlegend: true,
+						xaxis: {
+							tickangle: -80
+						}
+					}
+
+					
+					// console.log(data['dpd'].length);
+					
+					// get deaths per day
+					let res = data['dpd'];
+					let start = '';
+
+					res.forEach(function(val) {
+						// console.log(val[1]);
+						if(start == '')
+							start = val[1];
+
+						trace_daily.x.push(val[1]);
+						trace_daily.y.push(val[2]);
+
+						trace_7dma.x.push(val[1]);
+						trace_7dma.y.push(val[3]);
+
+					});
+
+					// console.log(start);
+
+					let trace_med = {
+						name: 'Median Deaths',
+						x: [start, data['dpd'].length],
+						y: [data['dpd_med'], data['dpd_med']],
+						type: "scatter"
+					};
+
+					let trace_per75 = {
+						name: '75th Percentile Deaths',
+						x: [start, data['dpd'].length],
+						y: [data['dpd_per75'], data['dpd_per75']],
+						type: "scatter"
+					};
+
+
+					Plotly.newPlot('result', [trace_daily, trace_med, trace_per75, trace_7dma], layout_deaths);
+
+				} else { // API IS DOWN
+
+					$('#result').append("<h3 style = 'color: red'>Internal Server Error.</h3>");
+					// console.log('Error');
+
+				}
+			}).fail( function(d) {
+
+				//	SERVER OFFLINE OR REFUSE CONNECTION
+				//	@hadles ERR_CONNECTION_REFUSED
+				// $('#result').append("<h3 style = 'color: red'>Server Connection Error.</h3>");
+				$('#result').append("<h3 style = 'color: red'>Server Connection Error or No Data Received.</h3>");
+				
+			});
+		}
+
+	</script>
+</body>
+</html>
